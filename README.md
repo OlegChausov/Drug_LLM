@@ -63,8 +63,7 @@ Python 3.12 · Docker Compose · Jinja2 templates · vanilla JS frontend.
 </iframe>
 ```
 
-<details>
-<summary>Screenshots</summary>
+## Screenshots
 
 ### Chat — variants
 
@@ -82,8 +81,6 @@ Python 3.12 · Docker Compose · Jinja2 templates · vanilla JS frontend.
 
 ![Vector](assets/images/vector.png)
 ![Vector 1](assets/images/vector1.png)
-
-</details>
 
 ---
 
