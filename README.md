@@ -100,7 +100,7 @@ browser → app:8000 → Qdrant (chunks)
 ### 1. Clone the repository
 
 ```bash
-git clone <URL>
+git clone https://github.com/OlegChausov/Drug_LLM.git
 cd Drug_LLM
 ```
 
