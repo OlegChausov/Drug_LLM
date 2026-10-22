@@ -14,7 +14,9 @@ or larger for higher quality. The active model is selected via `MODEL` and
 `MODEL_NER` in `.env`, no code changes required.
 
 Streaming WebSocket chat built on **FastAPI** and **LangChain**, fully containerized,
-with automatic database bootstrap from Hugging Face.
+with automatic database bootstrap from Hugging Face. The answer **streams smoothly
+token by token** — the reply starts appearing immediately instead of waiting for the
+whole generation to finish, so the chat feels responsive even on CPU-only hardware.
 
 > ⚠️ **Important:** This assistant is **not a substitute for a doctor**. For severe
 > depression or suicidal thoughts, the assistant **always redirects to professional
@@ -26,6 +28,23 @@ with automatic database bootstrap from Hugging Face.
 > living with depression**. You are welcome to deploy it widely on specialized
 > health-related resources, patient support platforms, and mental health communities —
 > anywhere it can make medical information more accessible and reduce harm.
+
+---
+
+## Tech stack
+
+| Layer | Technology | Role |
+|---|---|---|
+| **LLM** | [Ollama](https://ollama.com) | runs the local model; no data leaves your machine |
+| **LLM** | [LangChain](https://python.langchain.com) | prompt templates, streaming, dialogue memory |
+| **RAG** | [Qdrant](https://qdrant.tech) | vector search over drug leaflet fragments (embeddings) |
+| **RAG** | [Neo4j](https://neo4j.com) | knowledge graph of "drug — ingredient — effect" relations |
+| **Backend** | [FastAPI](https://fastapi.tiangolo.com) | HTTP/WebSocket API, UI routing, token streaming to the browser |
+| **Embeddings** | `intfloat/multilingual-e5-large` | multilingual embeddings shared by indexing and queries |
+
+Python 3.12 · Docker Compose · Jinja2 templates · vanilla JS frontend.
+
+---
 
 ## Two interfaces
 
