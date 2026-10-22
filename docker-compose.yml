@@ -1,0 +1,106 @@
+services:
+  storage-init:
+    image: python:3.12.7-slim
+    container_name: storage-init
+    working_dir: /workspace
+    volumes:
+      - ./storage:/workspace/storage
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_REPO_ID=${HF_REPO_ID:-OlegChausov/drug-llm-storage}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set in .env}
+    command: >
+      sh -c "
+        if [ -f /workspace/storage/.ready ]; then
+          echo 'Storage already present, skipping download';
+          exit 0;
+        fi;
+        pip install --quiet huggingface_hub &&
+        mkdir -p /workspace/storage/neo4j_data /workspace/storage/neo4j_logs /workspace/storage/qdrant_collections &&
+        hf download ${HF_REPO_ID:-OlegChausov/drug-llm-storage} --repo-type dataset --local-dir /workspace/storage &&
+        (chown -R 7474:7474 /workspace/storage/neo4j_data /workspace/storage/neo4j_logs 2>/dev/null || chmod -R 777 /workspace/storage/neo4j_data /workspace/storage/neo4j_logs) &&
+        (chown -R 1000:1000 /workspace/storage/qdrant_collections 2>/dev/null || chmod -R 777 /workspace/storage/qdrant_collections) &&
+        rm -f /workspace/storage/neo4j_data/dbms/auth.ini &&
+        touch /workspace/storage/.ready
+      "
+    restart: "no"
+
+  qdrant:
+    image: qdrant/qdrant:${QDRANT_VERSION:-v1.19.1}
+    container_name: qdrant
+    ports:
+      - "127.0.0.1:${QDRANT_HTTP_PORT:-6333}:6333"
+      - "127.0.0.1:${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - ./storage/qdrant_collections:/qdrant/storage
+    depends_on:
+      storage-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:${NEO4J_VERSION:-2026.09.0}
+    container_name: neo4j
+    ports:
+      - "127.0.0.1:${NEO4J_HTTP_PORT:-7474}:7474"
+      - "127.0.0.1:${NEO4J_BOLT_PORT:-7687}:7687"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set in .env}
+      - NEO4J_server_memory_heap_initial__size=${NEO4J_HEAP_INITIAL:-512m}
+      - NEO4J_server_memory_heap_max__size=${NEO4J_HEAP_MAX:-1G}
+      - NEO4J_server_memory_pagecache_size=${NEO4J_PAGECACHE:-512m}
+    volumes:
+      - ./storage/neo4j_data:/data
+      - ./storage/neo4j_logs:/logs
+    depends_on:
+      storage-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u '${NEO4J_USER:-neo4j}' -p '${NEO4J_PASSWORD}' 'RETURN 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llm-app
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - NEO4J_URI=bolt://neo4j:7687
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - HF_HOME=/root/.cache/huggingface
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      storage-init:
+        condition: service_completed_successfully
+      qdrant:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/ui_lc >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  hf_cache:

@@ -1,0 +1,24 @@
+# requirements.txt
+
+# PyTorch CPU (for sentence-transformers)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.5.0
+torchvision>=0.20.0
+
+# Web
+fastapi>=0.143.0
+uvicorn[standard]>=0.54.0
+python-dotenv>=1.2.2
+jinja2>=3.1.4
+
+# RAG
+qdrant-client>=1.19.0
+sentence-transformers>=6.0.1
+huggingface_hub>=1.33.0,<2.0.0
+
+# Graph
+neo4j>=6.3.1
+
+# LangChain
+langchain-core>=1.6.10
+langchain-ollama>=1.1.0

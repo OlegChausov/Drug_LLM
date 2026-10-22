@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ИИ-помощник по антидепрессантам</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+   
+</head>
+
+<body>
+
+    <!-- ========== HEADER ========== -->
+<header>
+    <div class="header-brand">
+<img src="/static/img/logo.png" alt="logo" class="logo">
+        <div class="header-text">
+            <h1>ИИ-консультант по антидепрессантам</h1>
+            <p>RAG + Knowledge Graph + LangChain</p>
+        </div>
+    </div>
+
+</header>
+
+    <!-- ========== CHAT ========== -->
+    <div id="chat"></div>
+
+    <!-- ========== INPUT ========== -->
+    <div id="input-area">
+        <textarea id="prompt" rows="1"
+                  placeholder="Задайте вопрос о препаратах..."></textarea>
+        <button id="send-btn" onclick="sendMessage()">Отправить</button>
+    </div>
+
+    <div class="input-hint">
+        <kbd>Enter</kbd> — отправить · <kbd>Shift</kbd>+<kbd>Enter</kbd> — новая строка
+    </div>
+
+
+    <script src="/static/js/scripts.js"></script>
+
+</body>
+</html>
